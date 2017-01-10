@@ -133,8 +133,11 @@ def validate_arc_signature_fields(sig):
     if re.match(br"[\s0-9A-Za-z+/]+=*$", sig[b'b']) is None:
         raise ValidationError("b= value is not valid base64 (%s)" % sig[b'b'])
     if re.match(br"[\s0-9A-Za-z+/]+=*$", sig[b'bh']) is None:
-        raise ValidationError(
-            "bh= value is not valid base64 (%s)" % sig[b'bh'])
+        raise ValidationError("bh= value is not valid base64 (%s)" % sig[b'bh'])
+    if len(re.sub(br"\s+", b"", sig[b'b'])) % 4 != 0:
+        raise ValidationError("b= value is not valid base64 (%s)" % sig[b'b'])
+    if len(re.sub(br"\s+", b"", sig[b'bh'])) % 4 != 0:    
+        raise ValidationError("bh= value is not valid base64 (%s)" % sig[b'bh'])    
     now = int(time.time())
     slop = 36000 # 10H leeway for mailers with inaccurate clocks
     t_sign = 0
@@ -161,6 +164,8 @@ def validate_arc_seal_fields(sig):
 
     if re.match(br"[\s0-9A-Za-z+/]+=*$", sig[b'b']) is None:
         raise ValidationError("b= value is not valid base64 (%s)" % sig[b'b'])
+    if len(re.sub(br"\s+", b"", sig[b'b'])) % 4 != 0:    
+        raise ValidationError("b= value is not valid base64 (%s)" % sig[b'b'])    
     if sig[b'cv'] not in (CV_Pass, CV_Fail, CV_None):
       raise ValidationError("cv= value is not valid (%s)" % sig[b'cv'])
     now = int(time.time())
