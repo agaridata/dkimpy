@@ -364,6 +364,7 @@ class ARC(object):
     ams_fields = [x for x in [
         (b'i', str(instance).encode('ascii')),
         (b'a', self.signature_algorithm),
+        (b'c', b'relaxed/relaxed'),
         (b'd', domain),
         (b's', selector),
         (b't', timestamp),
