@@ -125,7 +125,7 @@ def validate_arc_signature_fields(sig):
 
     @param sig: A dict mapping field keys to values.
     """
-    mandatory_fields = (b'i', b'a', b'b', b'bh', b'd', b'h', b's')
+    mandatory_fields = (b'i', b'a', b'b', b'c', b'bh', b'd', b'h', b's')
     for field in mandatory_fields:
         if field not in sig:
             raise ValidationError("arc-message-signature missing %s=" % field)
@@ -582,7 +582,10 @@ class ARC(object):
 
     ams_c = sig.get(b'c', b'relaxed/relaxed')
 
-    canon_policy = CanonicalizationPolicy.from_c_value(ams_c)
+    try:
+        canon_policy = CanonicalizationPolicy.from_c_value(ams_c)
+    except InvalidCanonicalizationPolicyError as e:
+        raise MessageFormatError("invalid c= value: %s" % ams_c)
 
     # TODO(blong): only hash the body once per algorithm
     try:
