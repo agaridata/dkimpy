@@ -608,6 +608,9 @@ class ARC(object):
     pk, keysize = self.load_pk_from_dns(name, dnsfunc)
     output['ams-keysize'] = keysize
     include_headers = [x.lower() for x in re.split(br"\s*:\s*", sig[b'h'])]
+    if b'arc-seal' in include_headers:
+        raise ParameterError("The Arc-Message-Signature MUST NOT sign ARC-Seal")
+
     # address bug#644046 by including any additional From header
     # fields when verifying.  Since there should be only one From header,
     # this shouldn't break any legitimate messages.  This could be
