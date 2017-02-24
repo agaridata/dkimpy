@@ -478,14 +478,14 @@ class ARC(object):
   #: @return: three-tuple of (CV Result (CV_Pass, CV_Fail or CV_None), list of
   #: result dictionaries, result reason)
   #: @raise ARCException: when the message, signature, or key are badly formed
-  def verify(self,dnsfunc=get_txt):
+  def verify(self,dnsfunc=get_txt, ignore_bh_validation=False):
     result_data = []
     max_instance, arc_headers_w_instance = self.sorted_arc_headers()
     if max_instance == 0:
         return CV_None, result_data, "Message is not ARC signed"
     for instance in range(max_instance, 0, -1):
         try:
-            result = self.verify_instance(arc_headers_w_instance, instance, dnsfunc=dnsfunc)
+            result = self.verify_instance(arc_headers_w_instance, instance, dnsfunc=dnsfunc, ignore_bh_validation=ignore_bh_validation)
             result_data.append(result)
         except ARCException as e:
             self.logger.error("%s" % e)
@@ -535,7 +535,7 @@ class ARC(object):
   #: for a DNS domain.  The default uses dnspython or pydns.
   #: @return: True if signature verifies or False otherwise
   #: @raise ARCException: when the message, signature, or key are badly formed
-  def verify_instance(self,arc_headers_w_instance,instance,dnsfunc=get_txt):
+  def verify_instance(self,arc_headers_w_instance,instance,dnsfunc=get_txt, ignore_bh_validation=False):
     if (instance == 0) or (len(arc_headers_w_instance) == 0):
         raise ParameterError("request to verify instance %d not present" % (instance))
 
@@ -599,10 +599,11 @@ class ARC(object):
         bh = base64.b64decode(re.sub(br"\s+", b"", sig[b'bh']))
     except TypeError as e:
         raise MessageFormatError(str(e))
-    if bodyhash != bh:
-        raise ValidationError(
-            "body hash mismatch (got %s, expected %s)" %
-            (base64.b64encode(bodyhash), sig[b'bh']))
+    if ignore_bh_validation:
+        if bodyhash != bh:
+            raise ValidationError(
+                "body hash mismatch (got %s, expected %s)" %
+                (base64.b64encode(bodyhash), sig[b'bh']))
 
     name = sig[b's'] + b"._domainkey." + sig[b'd'] + b"."
     pk, keysize = self.load_pk_from_dns(name, dnsfunc)
